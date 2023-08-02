@@ -2,6 +2,7 @@
 library(shiny)
 library(qualtRics) # for retrieving and processing Qualtrics survey data
 library(tidyverse) # for data wrangling and viz
+library(showtext) # to get Lato
 library(urbnthemes) # for styling plots
 library(emojifont)
 library(DT) # for creating data tables
@@ -23,7 +24,8 @@ emojify <- function(data){
 
 # ------------------------------------------------------------------------------
 # SET PLOT STYLE (FROM URBNTHEMES)
-# set_urbn_defaults(style = "print")
+
+font_add_google(name = "Lato", family = "Lato")
 
 
 # ------------------------------------------------------------------------------
@@ -38,7 +40,6 @@ ui <- fluidPage(
 
   tags$head(
     tags$link(rel = "stylesheet", type = "text/css", href = "shiny.css")
-    # TODO (optional): update shiny.css to change the dashboard styling
   ),
 
   titlePanel(NULL),
@@ -46,6 +47,15 @@ ui <- fluidPage(
   sidebarLayout(
 
     sidebarPanel(
+
+      # text
+      p(HTML(paste(a(href = "https://urban.co1.qualtrics.com/jfe/form/SV_dnWkyniOFkM4v4O", "Cast your vote here,"),
+                   "then click Refresh Qualtrics Data to see the dashboard update!")), style = "font-size: 26px"),
+      # p("Cast your vote here, then click Refresh Qualtrics Data to see the dashboard update!",
+      #      style = "font-size: 26px;"),
+
+      # white space
+      br(),
 
       # refresh data button
       actionButton(inputId = "refresh_data", label = "Refresh Qualtrics data"),
@@ -57,21 +67,24 @@ ui <- fluidPage(
       uiOutput(outputId = "n"),
 
       # date/time of last refresh
-      uiOutput(outputId = "last_refresh")
+      uiOutput(outputId = "last_refresh"),
 
-      # TODO (optional): add additional sidebar content
+      # white space
+      br(), br(), br(), br(), br(), br(), br(), br(), br(), br(), br(), br(),
+      br(), br(), br(), br(), br(), br(), br(), br(), br(), br(), br()
 
     ),
 
     mainPanel(
 
-      # TODO: customize your main panel with plots, tables, etc.
-      # this starter code (immediately below) displays one plot and one table
-      # you will need to provide code for the plot and table
-      # in the server function (further below)
+      h2(strong("What is the best way to spend a day at the beach?")),
+      h2(HTML("Basking in the sun", emoji("sunny"))),
+      h2(HTML("Chilling in the shade", emoji("beach_umbrella"))),
+      h2(HTML("Splashing in the waves", emoji("ocean"))),
+      br(), br(), br(),
 
       # plot
-      plotOutput(outputId = "plot"),
+      plotOutput(outputId = "plot")
 
     )
   )
@@ -90,7 +103,7 @@ server <- function(input, output) {
 
   # number of responses
   output$n <- renderUI({
-    HTML(paste(strong(nrow(survey())), "responses as of last refresh:"))
+    p(HTML(paste(strong(nrow(survey())), "responses as of last refresh:")), style = "font-size: 26px")
   })
 
   # date/time of last refresh
@@ -100,20 +113,33 @@ server <- function(input, output) {
 
   # plot
   for_plot <- eventReactive(input$refresh_data, {
-    # TODO (optional): prep your Qualtrics data for your plot
-    # if you wrote helper functions above, you can call them here!
+    survey() %>%
+      group_by(Q1) %>%
+      summarize(n = n()) %>%
+      mutate(fac = factor(Q1, levels = c(1, 2, 3)))
   }, ignoreNULL = FALSE)
 
   output$plot <- renderPlot(
-    (ggplot(data = survey(), aes(x = Q1)) +
-       geom_bar() +
-       scale_x_discrete(
-         limit = c(1, 2, 3),
-         labels = c("Sun", "Shade", "Waves")) +
+    (ggplot(data = for_plot(), aes(x = fac, y = n, fill = fac)) +
+       geom_bar(stat = "identity") +
+       scale_x_discrete(labels = c("Sun", "Shade", "Waves")) +
+       scale_fill_manual(values = c(
+         "#fdbf11",
+         "#db2b27",
+         "#1696d2"
+       )) +
+       scale_y_continuous(limits = c(0, (max(for_plot()$n)) * 1.1)) +
        theme(panel.background = element_blank(),
-             axis.ticks = element_blank(),
+             legend.position = "none",
              axis.title = element_blank(),
-             axis.text.y = element_blank())
+             axis.ticks = element_blank(),
+             axis.text.x = element_text(size = 40, family = "Lato"),
+             axis.text.y = element_blank()) +
+       geom_text(
+         aes(label = n),
+         size = 12,
+         vjust = -1
+       )
     )
   )
 
