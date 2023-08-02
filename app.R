@@ -2,32 +2,15 @@
 library(shiny)
 library(qualtRics) # for retrieving and processing Qualtrics survey data
 library(tidyverse) # for data wrangling and viz
+library(showtext) # to get Lato
 library(urbnthemes) # for styling plots
+library(emojifont)
 library(DT) # for creating data tables
-# TODO (optional): load any other packages you need
 
 
 # ------------------------------------------------------------------------------
-# SET CREDENTIALS FOR API CALLS
-# TODO: replace <THE_TEXT_IN_BRACKETS> with your API credentials and
-# run the following code once in your console
-
-# qualtrics_api_credentials(api_key = "<YOUR_QUALTRICS_API_KEY>",
-#                           base_url = "<YOUR_QUALTRICS_BASE_URL>",
-#                           install = TRUE)
-
-
-# ------------------------------------------------------------------------------
-# HELPER FUNCTIONS
-# TODO (optional): define any functions you need to work with your data
-# for example, if you need to process your data before you plot it,
-# you could write a data processing function here to call in you app
-# this can help make your app code easier to read
-
-
-# ------------------------------------------------------------------------------
-# SET PLOT STYLE (FROM URBNTHEMES)
-set_urbn_defaults(style = "print")
+# SET FONT
+font_add_google(name = "Lato", family = "Lato")
 
 
 # ------------------------------------------------------------------------------
@@ -42,7 +25,6 @@ ui <- fluidPage(
 
   tags$head(
     tags$link(rel = "stylesheet", type = "text/css", href = "shiny.css")
-    # TODO (optional): update shiny.css to change the dashboard styling
   ),
 
   titlePanel(NULL),
@@ -50,6 +32,15 @@ ui <- fluidPage(
   sidebarLayout(
 
     sidebarPanel(
+
+      # text
+      p(HTML(paste(a(href = "https://urban.co1.qualtrics.com/jfe/form/SV_dnWkyniOFkM4v4O", "Cast your vote here,"),
+                   "then click Refresh Qualtrics Data to see the dashboard update!")), style = "font-size: 26px"),
+      # p("Cast your vote here, then click Refresh Qualtrics Data to see the dashboard update!",
+      #      style = "font-size: 26px;"),
+
+      # white space
+      br(),
 
       # refresh data button
       actionButton(inputId = "refresh_data", label = "Refresh Qualtrics data"),
@@ -61,27 +52,24 @@ ui <- fluidPage(
       uiOutput(outputId = "n"),
 
       # date/time of last refresh
-      uiOutput(outputId = "last_refresh")
+      uiOutput(outputId = "last_refresh"),
 
-      # TODO (optional): add additional sidebar content
+      # white space
+      br(), br(), br(), br(), br(), br(), br(), br(), br(), br(), br(), br(),
+      br(), br(), br(), br(), br(), br(), br(), br(), br(), br()
 
     ),
 
     mainPanel(
 
-      # TODO: customize your main panel with plots, tables, etc.
-      # this starter code (immediately below) displays one plot and one table
-      # you will need to provide code for the plot and table
-      # in the server function (further below)
-      
+      h2(strong("What is the best way to spend a day at the beach?")),
+      h2(HTML("Basking in the sun", emoji("sunny"))),
+      h2(HTML("Chilling in the shade", emoji("beach_umbrella"))),
+      h2(HTML("Splashing in the waves", emoji("ocean"))),
+      br(), br(), br(),
+
       # plot
-      plotOutput(outputId = "plot"),
-      
-      # white space
-      br(),
-      
-      # table
-      DT::dataTableOutput(outputId = "table")
+      plotOutput(outputId = "plot")
 
     )
   )
@@ -92,16 +80,15 @@ server <- function(input, output) {
 
   # fetch Qualtrics data
   survey <- eventReactive(input$refresh_data, {
-    fetch_survey("<YOUR_SURVEY_ID>", # TODO: specify your survey ID
-                 label = FALSE, # get answers as numeric values instead of choice text
-                 # TODO (optional): customize your function call
-                 # run ?fetch_survey in your console for options
-                 )
+    fetch_survey("SV_dnWkyniOFkM4v4O",
+                 convert = FALSE,
+                 label = FALSE,
+                 force_request = TRUE)
   }, ignoreNULL = FALSE)
 
   # number of responses
   output$n <- renderUI({
-    HTML(paste(strong(nrow(survey())), "responses as of last refresh:"))
+    p(HTML(paste(strong(nrow(survey())), "responses as of last refresh:")), style = "font-size: 26px")
   })
 
   # date/time of last refresh
@@ -109,41 +96,39 @@ server <- function(input, output) {
     HTML(format(Sys.time(), "%B %d, %Y %I:%M %p"))
   }, ignoreNULL = FALSE)
 
-  # plot starter code
+  # plot
   for_plot <- eventReactive(input$refresh_data, {
-    # TODO (optional): prep your Qualtrics data for your plot
-    # if you wrote helper functions above, you can call them here!
+    survey() %>%
+      group_by(Q1) %>%
+      summarize(n = n()) %>%
+      mutate(fac = factor(Q1, levels = c(1, 2, 3)))
   }, ignoreNULL = FALSE)
-  
+
   output$plot <- renderPlot(
-    # TODO: add your ggplot code
-    # use data = survey() to plot data straight from Qualtrics
-    # use data = for_plot() to plot processed data
+    (ggplot(data = for_plot(), aes(x = fac, y = n, fill = fac)) +
+       geom_bar(stat = "identity") +
+       scale_x_discrete(labels = c("Sun", "Shade", "Waves")) +
+       scale_fill_manual(values = c(
+         "#fdbf11",
+         "#db2b27",
+         "#1696d2"
+       )) +
+       scale_y_continuous(limits = c(0, (max(for_plot()$n)) * 1.1)) +
+       theme(panel.background = element_blank(),
+             legend.position = "none",
+             axis.title = element_blank(),
+             axis.ticks = element_blank(),
+             axis.text.x = element_text(size = 40, family = "Lato"),
+             axis.text.y = element_blank()) +
+       geom_text(
+         aes(label = n),
+         size = 12,
+         vjust = -1
+       )
+    )
   )
-  
-  # table starter code
-  for_table <- eventReactive(input$refresh_data, {
-    # TODO (optional): prep your Qualtrics data for your table
-    # if you wrote helper functions above, you can call them here!
-  }, ignoreNULL = FALSE)
-  
-  output$table <- DT::renderDataTable({
-    DT::datatable(
-      # use data = survey() to plot data straight from Qualtrics
-      # use data = for_table() to plot processed data
-                  options = list(
-                    # TODO (optional): specify initialization options
-                    # see https://datatables.net/reference/option/
-                    # option 1,
-                    # option 2,
-                    # etc.
-                  ),
-                  # TODO (optional): customize your data table
-                  # run ?datatable in your console for options
-                  )
-  })
-  
-}  
+
+}
 
 # build shiny application
 shinyApp(ui = ui, server = server)
