@@ -1,0 +1,13 @@
+name: beach-day
+title: beach-day
+username: fvescia
+account: fvescia
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 9546908
+bundleId: 7524840
+url: https://fvescia.shinyapps.io/beach-day/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .Rprofile|README.md|renv.lock
