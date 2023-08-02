@@ -9,22 +9,7 @@ library(DT) # for creating data tables
 
 
 # ------------------------------------------------------------------------------
-# HELPER FUNCTIONS
-
-emojify <- function(data){
-
-  data %>%
-    mutate(Q1 = case_when(
-      Q1 == 1 ~ emoji("sunny"),
-      Q1 == 2 ~ emoji("beach_umbrella"),
-      Q1 == 3 ~ emoji("ocean")
-    ))
-}
-
-
-# ------------------------------------------------------------------------------
-# SET PLOT STYLE (FROM URBNTHEMES)
-
+# SET FONT
 font_add_google(name = "Lato", family = "Lato")
 
 
