@@ -56,7 +56,7 @@ ui <- fluidPage(
 
       # white space
       br(), br(), br(), br(), br(), br(), br(), br(), br(), br(), br(), br(),
-      br(), br(), br(), br(), br(), br(), br(), br(), br(), br(), br()
+      br(), br(), br(), br(), br(), br(), br(), br(), br(), br()
 
     ),
 
