@@ -4,7 +4,6 @@ library(qualtRics) # for retrieving and processing Qualtrics survey data
 library(tidyverse) # for data wrangling and viz
 library(showtext) # to get Lato
 library(urbnthemes) # for styling plots
-library(emojifont)
 library(DT) # for creating data tables
 
 
