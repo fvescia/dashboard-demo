@@ -3,31 +3,27 @@ library(shiny)
 library(qualtRics) # for retrieving and processing Qualtrics survey data
 library(tidyverse) # for data wrangling and viz
 library(urbnthemes) # for styling plots
+library(emojifont)
 library(DT) # for creating data tables
-# TODO (optional): load any other packages you need
-
-
-# ------------------------------------------------------------------------------
-# SET CREDENTIALS FOR API CALLS
-# TODO: replace <THE_TEXT_IN_BRACKETS> with your API credentials and
-# run the following code once in your console
-
-# qualtrics_api_credentials(api_key = "<YOUR_QUALTRICS_API_KEY>",
-#                           base_url = "<YOUR_QUALTRICS_BASE_URL>",
-#                           install = TRUE)
 
 
 # ------------------------------------------------------------------------------
 # HELPER FUNCTIONS
-# TODO (optional): define any functions you need to work with your data
-# for example, if you need to process your data before you plot it,
-# you could write a data processing function here to call in you app
-# this can help make your app code easier to read
+
+emojify <- function(data){
+
+  data %>%
+    mutate(Q1 = case_when(
+      Q1 == 1 ~ emoji("sunny"),
+      Q1 == 2 ~ emoji("beach_umbrella"),
+      Q1 == 3 ~ emoji("ocean")
+    ))
+}
 
 
 # ------------------------------------------------------------------------------
 # SET PLOT STYLE (FROM URBNTHEMES)
-set_urbn_defaults(style = "print")
+# set_urbn_defaults(style = "print")
 
 
 # ------------------------------------------------------------------------------
@@ -73,15 +69,9 @@ ui <- fluidPage(
       # this starter code (immediately below) displays one plot and one table
       # you will need to provide code for the plot and table
       # in the server function (further below)
-      
+
       # plot
       plotOutput(outputId = "plot"),
-      
-      # white space
-      br(),
-      
-      # table
-      DT::dataTableOutput(outputId = "table")
 
     )
   )
@@ -92,11 +82,10 @@ server <- function(input, output) {
 
   # fetch Qualtrics data
   survey <- eventReactive(input$refresh_data, {
-    fetch_survey("<YOUR_SURVEY_ID>", # TODO: specify your survey ID
-                 label = FALSE, # get answers as numeric values instead of choice text
-                 # TODO (optional): customize your function call
-                 # run ?fetch_survey in your console for options
-                 )
+    fetch_survey("SV_dnWkyniOFkM4v4O",
+                 convert = FALSE,
+                 label = FALSE,
+                 force_request = TRUE)
   }, ignoreNULL = FALSE)
 
   # number of responses
@@ -109,41 +98,26 @@ server <- function(input, output) {
     HTML(format(Sys.time(), "%B %d, %Y %I:%M %p"))
   }, ignoreNULL = FALSE)
 
-  # plot starter code
+  # plot
   for_plot <- eventReactive(input$refresh_data, {
     # TODO (optional): prep your Qualtrics data for your plot
     # if you wrote helper functions above, you can call them here!
   }, ignoreNULL = FALSE)
-  
+
   output$plot <- renderPlot(
-    # TODO: add your ggplot code
-    # use data = survey() to plot data straight from Qualtrics
-    # use data = for_plot() to plot processed data
+    (ggplot(data = survey(), aes(x = Q1)) +
+       geom_bar() +
+       scale_x_discrete(
+         limit = c(1, 2, 3),
+         labels = c("Sun", "Shade", "Waves")) +
+       theme(panel.background = element_blank(),
+             axis.ticks = element_blank(),
+             axis.title = element_blank(),
+             axis.text.y = element_blank())
+    )
   )
-  
-  # table starter code
-  for_table <- eventReactive(input$refresh_data, {
-    # TODO (optional): prep your Qualtrics data for your table
-    # if you wrote helper functions above, you can call them here!
-  }, ignoreNULL = FALSE)
-  
-  output$table <- DT::renderDataTable({
-    DT::datatable(
-      # use data = survey() to plot data straight from Qualtrics
-      # use data = for_table() to plot processed data
-                  options = list(
-                    # TODO (optional): specify initialization options
-                    # see https://datatables.net/reference/option/
-                    # option 1,
-                    # option 2,
-                    # etc.
-                  ),
-                  # TODO (optional): customize your data table
-                  # run ?datatable in your console for options
-                  )
-  })
-  
-}  
+
+}
 
 # build shiny application
 shinyApp(ui = ui, server = server)
